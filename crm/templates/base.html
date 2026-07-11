@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+          rel="stylesheet"/>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <a href="#" class="brand" aria-label="DOXA RDS — home">
+            <span class="brand-badge" aria-hidden="true">L</span>
+            <span class="brand-name">LOGO</span>
+        </a>
+    </div>
+
+</header>
+
+
+
+<main>
+    {% block content %}
+    {% endblock %}
+</main>
+
+
+<footer class="site-footer">
+    <div class="footer-inner">
+
+        <div class="footer-brand">
+            <div class="footer-logo">D</div>
+            <div class="footer-brand-text">
+                Developed by <strong>DOXA RDS</strong><br>
+                <span class="footer-copy">&copy; 2026 All rights reserved.</span>
+            </div>
+        </div>
+
+        <div class="footer-contacts">
+            <a href="tel:+37493873064">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                +374 93 873064
+            </a>
+
+            <a href="mailto:rdsdoxa@gmail.com">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16v16H4z"/>
+                    <path d="M22 6l-10 7L2 6"/>
+                </svg>
+                rdsdoxa@gmail.com
+            </a>
+
+
+        </div>
+
+    </div>
+</footer>
+
+<script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
