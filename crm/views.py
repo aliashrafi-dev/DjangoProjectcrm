@@ -238,6 +238,8 @@ def manager_dashboard(request):
     return render(request, 'manager.html', context)
 
 
+
+
 @login_required
 def employee_dashboard(request):
     # جلوگیری از دسترسی سایر نقش‌ها به این پنل[cite: 3]
