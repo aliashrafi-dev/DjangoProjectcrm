@@ -1,0 +1,468 @@
+{% load static %}
+<!doctype html>
+<html lang="fa" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manager Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0F14; --bg-elevated:#0F141B; --surface:#141B24; --surface-hover:#1A2330;
+    --border:#212B38; --border-strong:#2E3B4C; --text:#E7ECF2; --text-muted:#8B99AC;
+    --text-faint:#526175; --accent:#46E0C4; --accent-dim:rgba(70,224,196,.12);
+    --indigo:#8C87F0; --indigo-dim:rgba(140,135,240,.12);
+    --danger:#F0665B; --danger-dim:rgba(240,102,91,.12);
+    --warning:#F5B455; --warning-dim:rgba(245,180,85,.12);
+    --info:#5B9DF5; --info-dim:rgba(91,157,245,.12);
+    --radius:10px; --sidebar-w:232px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-size:14px;}
+  a{color:inherit;text-decoration:none;cursor:pointer;}
+  button{font-family:inherit;cursor:pointer;}
+
+  /* Layout */
+  .shell{display:flex;min-height:100vh;}
+
+  /* Sidebar */
+  .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--bg-elevated);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh;}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 22px;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .brand-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--indigo), #423F8A);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .brand-mark svg{width:16px;height:16px;stroke:#fff;}
+  .brand-name{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15.5px;}
+  .brand-sub{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;}
+
+  .nav-section-label{font-size:10.5px;color:var(--text-faint);letter-spacing:1.2px;text-transform:uppercase;padding:14px 10px 6px;}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;color:var(--text-muted);font-size:13.5px;font-weight:500;margin-bottom:2px;border:1px solid transparent;position:relative;transition:background .15s, color .15s;}
+  .nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;}
+  .nav-item:hover{background:var(--surface-hover);color:var(--text);}
+  .nav-item.active{background:var(--indigo-dim);color:var(--indigo);}
+  .nav-item.active::before{content:"";position:absolute;left:-14px;top:8px;bottom:8px;width:3px;background:var(--indigo);border-radius:0 3px 3px 0;}
+  .nav-badge{margin-left:auto;font-size:10.5px;background:var(--surface-hover);color:var(--text-muted);padding:1px 6px;border-radius:20px; font-family:'JetBrains Mono',monospace;}
+  .nav-item.active .nav-badge{background:rgba(140,135,240,.18);color:var(--indigo);}
+
+  .sidebar-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;padding-left:8px;}
+  .avatar{width:32px;height:32px;border-radius:8px;background:var(--indigo-dim);color:var(--indigo);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12.5px;text-transform:uppercase;}
+  .sidebar-footer-name{font-size:13px;font-weight:600;}
+  .sidebar-footer-role{font-size:11px;color:var(--text-faint);}
+
+  /* Main */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .topbar{height:60px;flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:0 26px;border-bottom:1px solid var(--border);background:var(--bg-elevated);}
+  .icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;position:relative;color:var(--text-muted);transition:all .15s;}
+  .icon-btn:hover{background:var(--surface-hover);color:var(--text);}
+  .icon-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;}
+  .dot-badge{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--bg-elevated);}
+
+  .content{padding:24px 26px 60px;overflow-y:auto;}
+  .page{display:none;}
+  .page.active{display:block;animation:fade-in .25s ease;}
+  @keyframes fade-in{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .page-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;}
+  .page-title{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;}
+  .page-desc{color:var(--text-muted);font-size:12.5px;margin-top:3px;}
+
+  /* Stat cards */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden;}
+  .stat-card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--stat-accent,var(--indigo));}
+  .stat-label{font-size:11.5px;color:var(--text-muted);}
+  .stat-value{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;margin-top:8px;}
+
+  /* Panels & Tables */
+  .grid-2{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:14px;align-items:start;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);}
+  .panel-head h3{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;margin:0;}
+  .panel-body{padding:14px 16px;}
+
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;color:var(--text-faint);font-weight:600;padding:0 12px 10px;}
+  td{padding:11px 12px;border-top:1px solid var(--border);font-size:13px;vertical-align:middle;}
+  tr.row-hover:hover td{background:var(--surface-hover);}
+  .cell-name{font-weight:500;}
+
+  /* UI Elements */
+  .btn-primary{background:var(--indigo);color:#fff;font-weight:600;font-size:12.5px;padding:9px 15px;border-radius:8px;border:none;display:flex;align-items:center;gap:7px;}
+  .btn-primary svg{width:13px;height:13px;stroke:#fff;stroke-width:2.4;}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+  .pill .dot{width:6px;height:6px;border-radius:50%;}
+  .pill-teal{background:var(--accent-dim);color:var(--accent);}
+  .pill-warning{background:var(--warning-dim);color:var(--warning);}
+  .pill-info{background:var(--info-dim);color:var(--info);}
+  .text-faint{color:var(--text-faint);}
+
+  .select-stage{background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:inherit;outline:none;}
+  .select-stage:focus{border-color:var(--indigo);}
+
+  .mini-avatar{width:22px;height:22px;border-radius:6px;background:var(--info-dim);color:var(--info);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;text-transform:uppercase;margin-right:6px;vertical-align:middle;}
+
+  /* Modals */
+  .modal-overlay {position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(11, 15, 20, 0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s;}
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-box {background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 420px; padding: 24px; position: relative; transform: translateY(10px); transition: transform 0.2s;}
+  .modal-overlay.active .modal-box { transform: translateY(0); }
+  .modal-title { font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--text-muted); padding: 4px; border-radius: 6px; }
+  .modal-close:hover { background: var(--surface-hover); color: var(--text); }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500; }
+  .form-control { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-family: inherit; font-size: 13px; outline: none; }
+  .form-control:focus { border-color: var(--indigo); }
+  .form-submit { width: 100%; background: var(--indigo); color: #fff; font-weight: 600; border: none; padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 10px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+{% if messages %}
+<div style="position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px;">
+    {% for message in messages %}
+    <div style="background: var(--surface); border: 1px solid var(--indigo); padding: 12px 16px; border-radius: 8px; color: var(--text);">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Manager Desk</div>
+        <div class="brand-sub">{% if department %}{{ department.name }}{% else %}Dept. Manager{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="nav-section-label">Department</div>
+    <a class="nav-item active" data-page="overview" onclick="showPage('overview', this)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      Overview
+    </a>
+    <a class="nav-item" data-page="tasks" onclick="showPage('tasks', this)">
+      <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>
+      Dept Tasks
+      <span class="nav-badge">{{ open_tasks.count }}</span>
+    </a>
+    <a class="nav-item" data-page="customers" onclick="showPage('customers', this)">
+      <svg viewBox="0 0 24 24"><rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8 7V5.5A2.5 2.5 0 0110.5 3h3A2.5 2.5 0 0116 5.5V7"/></svg>
+      Dept Customers
+      <span class="nav-badge">{{ customers.count }}</span>
+    </a>
+    <a class="nav-item" data-page="team" onclick="showPage('team', this)">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Team Members
+      <span class="nav-badge">{{ dept_users.count }}</span>
+    </a>
+
+    <div class="sidebar-footer">
+      <div class="avatar">{{ request.user.username|make_list|first }}</div>
+      <div>
+        <div class="sidebar-footer-name">{{ request.user.username }}</div>
+        <div class="sidebar-footer-role">Manager</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <button class="icon-btn">
+        <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+        {% if open_tasks.count > 0 %}<span class="dot-badge"></span>{% endif %}
+      </button>
+      <button class="icon-btn" onclick="window.location.href='/logout'">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
+    </div>
+
+    <div class="content">
+
+      <!-- ============ OVERVIEW ============ -->
+      <section class="page active" id="page-overview">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Department Overview</div>
+            <div class="page-desc">Metrics and workload for {% if department %}{{ department.name }}{% else %}your team{% endif %}.</div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card" style="--stat-accent:var(--indigo)">
+            <div class="stat-label">Total Tasks</div>
+            <div class="stat-value">{{ tasks.count }}</div>
+          </div>
+          <div class="stat-card" style="--stat-accent:var(--warning)">
+            <div class="stat-label">Open Tasks</div>
+            <div class="stat-value">{{ open_tasks.count }}</div>
+          </div>
+          <div class="stat-card" style="--stat-accent:var(--accent)">
+            <div class="stat-label">Total Customers</div>
+            <div class="stat-value">{{ customers.count }}</div>
+          </div>
+          <div class="stat-card" style="--stat-accent:var(--info)">
+            <div class="stat-label">Team Members</div>
+            <div class="stat-value">{{ dept_users.count }}</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Recent Department Tasks</h3>
+            </div>
+            <div class="panel-body" style="padding:0;">
+              <table>
+                <thead><tr><th>Task</th><th>Assigned To</th><th>Stage</th></tr></thead>
+                <tbody>
+                  {% for task in tasks|slice:":6" %}
+                  <tr class="row-hover">
+                    <td class="cell-name">{{ task.title }}</td>
+                    <td><span class="mini-avatar">{{ task.assigned_to.username|make_list|first }}</span>{{ task.assigned_to.username }}</td>
+                    <td>
+                      {% if task.stage == 'created' %}<span class="pill" style="background:var(--surface-hover);color:var(--text-faint);"><span class="dot" style="background:var(--text-faint)"></span>Created</span>
+                      {% elif task.stage == 'in_progress' %}<span class="pill pill-info"><span class="dot"></span>In progress</span>
+                      {% elif task.stage == 'review' %}<span class="pill pill-warning"><span class="dot"></span>Review</span>
+                      {% elif task.stage == 'completed' %}<span class="pill pill-teal"><span class="dot"></span>Completed</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr><td colspan="3" class="text-faint" style="text-align:center;">No tasks found.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Team Workload</h3>
+            </div>
+            <div class="panel-body" style="padding:0;">
+              <table>
+                <thead><tr><th>Member</th><th>Role</th></tr></thead>
+                <tbody>
+                  {% for u in dept_users %}
+                  <tr class="row-hover">
+                    <td class="cell-name"><span class="mini-avatar">{{ u.username|make_list|first }}</span>{{ u.username }}</td>
+                    <td class="text-faint">{{ u.get_role_display|default:u.role }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ DEPT TASKS ============ -->
+      <section class="page" id="page-tasks">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Department Tasks</div>
+            <div class="page-desc">Track and manage tasks assigned to your team.</div>
+          </div>
+          <button class="btn-primary" onclick="openModal('modal-add-task')">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Assign New Task
+          </button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-body" style="padding:0;">
+            <table>
+              <thead><tr><th>Task Title</th><th>Assigned To</th><th>Deadline</th><th>Update Stage</th></tr></thead>
+              <tbody>
+                {% for task in tasks %}
+                <tr class="row-hover">
+                  <td class="cell-name">{{ task.title }}</td>
+                  <td><span class="mini-avatar">{{ task.assigned_to.username|make_list|first }}</span>{{ task.assigned_to.username }}</td>
+                  <td class="text-faint">{% if task.deadline %}{{ task.deadline|date:"M d" }}{% else %}—{% endif %}</td>
+                  <td>
+                    <!-- فرم تغییر سریع وضعیت تسک -->
+                    <form method="POST" style="margin:0;">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="edit_stage">
+                      <input type="hidden" name="model_name" value="task">
+                      <input type="hidden" name="id" value="{{ task.id }}">
+                      <select name="stage" class="select-stage" onchange="this.form.submit()">
+                        <option value="created" {% if task.stage == 'created' %}selected{% endif %}>Created</option>
+                        <option value="in_progress" {% if task.stage == 'in_progress' %}selected{% endif %}>In Progress</option>
+                        <option value="review" {% if task.stage == 'review' %}selected{% endif %}>Review</option>
+                        <option value="completed" {% if task.stage == 'completed' %}selected{% endif %}>Completed</option>
+                      </select>
+                    </form>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-faint" style="text-align:center;">No tasks found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ DEPT CUSTOMERS ============ -->
+      <section class="page" id="page-customers">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Department Customers</div>
+            <div class="page-desc">Clients handled by your department members.</div>
+          </div>
+          <button class="btn-primary" onclick="openModal('modal-add-customer')">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New Customer
+          </button>
+        </div>
+
+        <div class="panel">
+          <div class="panel-body" style="padding:0;">
+            <table>
+              <thead><tr><th>Customer Name</th><th>Handled By</th><th>Status</th><th>Contact Info</th></tr></thead>
+              <tbody>
+                {% for customer in customers %}
+                <tr class="row-hover">
+                  <td class="cell-name">{{ customer.name }}</td>
+                  <td>{{ customer.created_by.username }}</td>
+                  <td>
+                    {% if customer.status == 'new' %}<span class="pill pill-warning"><span class="dot"></span>New</span>
+                    {% elif customer.status == 'in_progress' %}<span class="pill pill-info"><span class="dot"></span>In progress</span>
+                    {% elif customer.status == 'contract_signed' %}<span class="pill pill-teal"><span class="dot"></span>Contract signed</span>
+                    {% elif customer.status == 'lost' %}<span class="pill" style="background:var(--surface-hover);color:var(--text-faint);"><span class="dot" style="background:var(--text-faint)"></span>Lost</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-faint">{{ customer.contact_info }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-faint" style="text-align:center;">No customers found.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TEAM ============ -->
+      <section class="page" id="page-team">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Team Roster</div>
+            <div class="page-desc">All employees registered under this department.</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-body" style="padding:0;">
+            <table>
+              <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
+              <tbody>
+                {% for u in dept_users %}
+                <tr class="row-hover">
+                  <td class="cell-name"><span class="mini-avatar">{{ u.username|make_list|first }}</span>{{ u.username }}</td>
+                  <td>{{ u.get_role_display|default:u.role }}</td>
+                  <td>
+                    {% if u.is_active %}<span class="pill pill-teal"><span class="dot"></span>Active</span>
+                    {% else %}<span class="pill" style="background:var(--surface-hover);color:var(--text-faint);"><span class="dot" style="background:var(--text-faint)"></span>Inactive</span>{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- Modal: Assign Task -->
+<div class="modal-overlay" id="modal-add-task">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modal-add-task')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <h3 class="modal-title">Assign New Task</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add">
+            <input type="hidden" name="model_name" value="task">
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" name="title" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" class="form-control" rows="2" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Assign To (Team Member)</label>
+                <select name="assigned_to" class="form-control" required>
+                    {% for u in dept_users %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Deadline</label>
+                <input type="datetime-local" name="deadline" class="form-control">
+            </div>
+            <button type="submit" class="form-submit">Create Task</button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Add Customer -->
+<div class="modal-overlay" id="modal-add-customer">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modal-add-customer')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <h3 class="modal-title">Register Customer</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add">
+            <input type="hidden" name="model_name" value="customer">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Contact Info</label>
+                <textarea name="contact_info" class="form-control" rows="2" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status" class="form-control" required>
+                    <option value="new">New</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="contract_signed">Contract Signed</option>
+                    <option value="lost">Lost</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <textarea name="description" class="form-control" rows="2"></textarea>
+            </div>
+            <button type="submit" class="form-submit">Add Customer</button>
+        </form>
+    </div>
+</div>
+
+<script>
+  function showPage(name, el){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.querySelectorAll('.nav-item[data-page]').forEach(n => n.classList.remove('active'));
+    if(el) el.classList.add('active');
+  }
+  function openModal(id) { document.getElementById(id).classList.add('active'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+</script>
+
+</body>
+</html>

@@ -80,7 +80,7 @@ DATABASES = {
 
         "ENGINE": "django.db.backends.postgresql",
 
-        "NAME": "crm_db",
+        "NAME": "crm1",
 
         "USER": "postgres",
 
