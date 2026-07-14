@@ -289,6 +289,9 @@
   .row-actions svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.7;}
 
   .btn-icon-danger:hover { color: var(--danger) !important; border-color: var(--danger-dim) !important; background: var(--danger-dim) !important; }
+  .btn-icon-edit:hover { color: var(--info) !important; border-color: var(--info-dim) !important; background: var(--info-dim) !important; }
+  .btn-icon-view:hover { color: var(--accent) !important; border-color: var(--accent-dim) !important; background: var(--accent-dim) !important; }
+.text-accent { color: var(--accent); }
 
   .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
   .filter-group{display:flex;gap:8px;}
@@ -320,7 +323,7 @@
   .modal-overlay.active { opacity: 1; pointer-events: auto; }
   .modal-box {
     background: var(--bg-elevated); border: 1px solid var(--border);
-    border-radius: var(--radius); width: 100%; max-width: 420px;
+    border-radius: var(--radius); width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto;
     padding: 24px; position: relative; transform: translateY(10px);
     transition: transform 0.2s;
   }
@@ -401,7 +404,6 @@
       Activity Log
     </a>
 
-
     <div class="sidebar-footer">
       <div class="avatar">{{ request.user.username|make_list|first|upper }}</div>
       <div>
@@ -410,13 +412,13 @@
       </div>
     </div>
       <a class="nav-item" href="/logout">
-  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-    <polyline points="16 17 21 12 16 7"></polyline>
-    <line x1="21" y1="12" x2="9" y2="12"></line>
-  </svg>
-  Logout
-</a>
+      <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <polyline points="16 17 21 12 16 7"></polyline>
+        <line x1="21" y1="12" x2="9" y2="12"></line>
+      </svg>
+      Logout
+    </a>
   </aside>
 
   <!-- ================= MAIN ================= -->
@@ -445,13 +447,6 @@
     <div class="ticker">
       <div class="ticker-track" id="tickerTrack">
           <!-- Dynamic Ticker via Django -->
-          {% for a in activity_logs|slice:":10" %}
-          <div class="ticker-item">
-            <span class="ticker-dot" style="background:var(--accent)"></span>
-            <b>{{ a.user.username }}</b> {{ a.action }}
-            <span class="ticker-time">{{ a.timestamp|timesince }} ago</span>
-          </div>
-          {% endfor %}
           {% for a in activity_logs|slice:":10" %}
           <div class="ticker-item">
             <span class="ticker-dot" style="background:var(--accent)"></span>
@@ -581,7 +576,7 @@
               <tbody>
                 {% for customer in customers|slice:":5" %}
                 <tr class="row-hover">
-                  <td class="cell-name">{{ customer.name }}</td>
+                  <td class="cell-name">{{ customer.first_name }} {{ customer.last_name }}</td>
                   <td>
                     {% if customer.status == 'new' %}<span class="pill pill-warning"><span class="dot"></span>New</span>
                     {% elif customer.status == 'in_progress' %}<span class="pill pill-info"><span class="dot"></span>In progress</span>
@@ -621,6 +616,9 @@
                   <td class="mono">{{ dept.members.count }}</td>
                   <td>
                     <div class="row-actions">
+                      <button type="button" class="btn-icon-edit" onclick="openEditDepartment('{{ dept.id }}', '{{ dept.name|escapejs }}', '{{ dept.manager_id|default_if_none:'' }}', '{{ dept.parent_id|default_if_none:'' }}')">
+                        <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      </button>
                       <form method="POST" style="display:inline;" onsubmit="return confirm('حذف شود؟')">
                           {% csrf_token %}
                           <input type="hidden" name="action" value="delete">
@@ -651,11 +649,12 @@
         <div class="panel">
           <div class="panel-body" style="padding:0;">
             <table>
-              <thead><tr><th>Task</th><th>Assigned to</th><th>Stage</th><th>Deadline</th><th></th></tr></thead>
+              <thead><tr><th>Task</th><th>Customer</th><th>Assigned to</th><th>Stage</th><th>Deadline</th><th></th></tr></thead>
               <tbody>
                 {% for task in tasks %}
                 <tr class="row-hover">
                   <td class="cell-name">{{ task.title }}</td>
+                  <td>{{ task.customer.first_name }} {{ task.customer.last_name }}</td>
                   <td><div class="mini-avatar">{{ task.assigned_to.username|make_list|first|upper }}</div>&nbsp; {{ task.assigned_to.username }}</td>
                   <td>
                     {% if task.stage == 'created' %}<span class="pill" style="background:var(--surface-hover);color:var(--text-faint);"><span class="dot" style="background:var(--text-faint)"></span>Created</span>
@@ -667,6 +666,9 @@
                   <td class="mono text-faint">{% if task.deadline %}{{ task.deadline|date:"M d" }}{% else %}—{% endif %}</td>
                   <td>
                     <div class="row-actions">
+                      <button type="button" class="btn-icon-edit" onclick="openEditTask('{{ task.id }}', '{{ task.title|escapejs }}', '{{ task.description|escapejs }}', '{{ task.customer_id }}', '{{ task.assigned_to_id }}', '{{ task.stage }}', '{{ task.deadline|date:"Y-m-d\TH:i" }}', '{{ task.created_by_id }}')">
+                        <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      </button>
                       <form method="POST" style="display:inline;" onsubmit="return confirm('حذف شود؟')">
                           {% csrf_token %}
                           <input type="hidden" name="action" value="delete">
@@ -715,6 +717,9 @@
                   </td>
                   <td>
                     <div class="row-actions">
+                      <button type="button" class="btn-icon-edit" onclick="openEditUser('{{ u.id }}', '{{ u.username|escapejs }}', '{{ u.email|default_if_none:""|escapejs }}', '{{ u.role }}', '{{ u.department_id|default_if_none:"" }}', '{{ u.is_active|lower }}')">
+                        <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      </button>
                       <form method="POST" style="display:inline;" onsubmit="return confirm('حذف شود؟')">
                           {% csrf_token %}
                           <input type="hidden" name="action" value="delete">
@@ -745,11 +750,11 @@
         <div class="panel">
           <div class="panel-body" style="padding:0;">
             <table>
-              <thead><tr><th>Customer</th><th>Status</th><th>Owner</th><th>Contact</th><th></th></tr></thead>
+              <thead><tr><th>Customer</th><th>Status</th><th>Owner</th><th>Phone</th><th></th></tr></thead>
               <tbody>
                 {% for customer in customers %}
                 <tr class="row-hover">
-                  <td class="cell-name">{{ customer.name }}</td>
+                  <td class="cell-name">{{ customer.first_name }} {{ customer.last_name }}</td>
                   <td>
                     {% if customer.status == 'new' %}<span class="pill pill-warning"><span class="dot"></span>New</span>
                     {% elif customer.status == 'in_progress' %}<span class="pill pill-info"><span class="dot"></span>In progress</span>
@@ -758,9 +763,17 @@
                     {% endif %}
                   </td>
                   <td>{{ customer.created_by.username }}</td>
-                  <td class="text-faint">{{ customer.contact_info }}</td>
+                  <td class="text-faint">{{ customer.phone_number }}</td>
                   <td>
-                    <div class="row-actions">
+
+
+                      <div class="row-actions">
+                          <button type="button" class="btn-icon-view" onclick="openCustomerTasks('{{ customer.id }}', '{{ customer.first_name|escapejs }} {{ customer.last_name|escapejs }}')" title="View Tasks">
+                            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                      <button type="button" class="btn-icon-edit" onclick="openEditCustomer('{{ customer.id }}', '{{ customer.first_name|escapejs }}', '{{ customer.last_name|escapejs }}', '{{ customer.phone_number|escapejs }}', '{{ customer.email|default_if_none:""|escapejs }}', '{{ customer.passport_number|default_if_none:""|escapejs }}', '{{ customer.address|default_if_none:""|escapejs }}', '{{ customer.description|default_if_none:""|escapejs }}', '{{ customer.status }}', '{{ customer.created_by_id }}')">
+                        <svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                      </button>
                       <form method="POST" style="display:inline;" onsubmit="return confirm('حذف شود؟')">
                           {% csrf_token %}
                           <input type="hidden" name="action" value="delete">
@@ -795,7 +808,11 @@
                   <tr class="row-hover">
                     <td class="cell-name">{{ a.user.username }}</td>
                     <td>{{ a.action }}</td>
-                    <td class="text-faint">{% if a.related_customer %}{{ a.related_customer.name }}{% elif a.related_task %}{{ a.related_task.title }}{% else %}—{% endif %}</td>
+                    <td class="text-faint">
+                      {% if a.related_customer %}{{ a.related_customer.first_name }} {{ a.related_customer.last_name }}
+                      {% elif a.related_task %}{{ a.related_task.title }}
+                      {% else %}—{% endif %}
+                    </td>
                     <td class="mono text-faint">{{ a.timestamp|timesince }} ago</td>
                   </tr>
                   {% endfor %}
@@ -809,7 +826,7 @@
   </div>
 </div>
 
-<!-- ================= MODALS ================= -->
+<!-- ================= MODALS (ADD) ================= -->
 
 <!-- Modal: Add Task -->
 <div class="modal-overlay" id="modal-add-task">
@@ -827,6 +844,15 @@
             <div class="form-group">
                 <label>Description</label>
                 <textarea name="description" class="form-control" rows="2" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Customer</label>
+                <select name="customer" class="form-control" required>
+                    <option value="">-- Select Customer --</option>
+                    {% for c in customers %}
+                        <option value="{{ c.id }}">{{ c.first_name }} {{ c.last_name }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-group">
                 <label>Assign To</label>
@@ -906,6 +932,10 @@
                 <input type="text" name="username" class="form-control" required>
             </div>
             <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control">
+            </div>
+            <div class="form-group">
                 <label>Password</label>
                 <input type="password" name="password" class="form-control" required>
             </div>
@@ -941,12 +971,32 @@
             <input type="hidden" name="action" value="add">
             <input type="hidden" name="model_name" value="customer">
             <div class="form-group">
-                <label>Name</label>
-                <input type="text" name="name" class="form-control" required>
+                <label>First Name</label>
+                <input type="text" name="first_name" class="form-control" required>
             </div>
             <div class="form-group">
-                <label>Contact Info</label>
-                <textarea name="contact_info" class="form-control" rows="2" required></textarea>
+                <label>Last Name</label>
+                <input type="text" name="last_name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" name="phone_number" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Email (Optional)</label>
+                <input type="email" name="email" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Passport Number (Optional)</label>
+                <input type="text" name="passport_number" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Address (Optional)</label>
+                <textarea name="address" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <textarea name="description" class="form-control" rows="2"></textarea>
             </div>
             <div class="form-group">
                 <label>Status</label>
@@ -957,12 +1007,240 @@
                     <option value="lost">Lost</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label>Description (Optional)</label>
-                <textarea name="description" class="form-control" rows="2"></textarea>
-            </div>
             <button type="submit" class="form-submit">Create Customer</button>
         </form>
+    </div>
+</div>
+
+<!-- ================= MODALS (EDIT) ================= -->
+
+<!-- Edit Department Modal -->
+<div class="modal-overlay" id="modal-edit-department">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modal-edit-department')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <h3 class="modal-title">Edit Department</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="model_name" value="department">
+            <input type="hidden" name="id" id="edit_dept_id">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" name="name" id="edit_dept_name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Manager</label>
+                <select name="manager" id="edit_dept_manager" class="form-control">
+                    <option value="">-- No Manager --</option>
+                    {% for u in users %}
+                        {% if u.role == 'department_manager' %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Parent Department</label>
+                <select name="parent" id="edit_dept_parent" class="form-control">
+                    <option value="">-- No Parent --</option>
+                    {% for d in departments %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="form-submit">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div class="modal-overlay" id="modal-edit-task">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modal-edit-task')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <h3 class="modal-title">Edit Task</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="model_name" value="task">
+            <input type="hidden" name="id" id="edit_task_id">
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" name="title" id="edit_task_title" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" id="edit_task_desc" class="form-control" rows="2" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Customer</label>
+                <select name="customer" id="edit_task_customer" class="form-control" required>
+                    {% for c in customers %}
+                        <option value="{{ c.id }}">{{ c.first_name }} {{ c.last_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Assign To</label>
+                <select name="assigned_to" id="edit_task_assigned" class="form-control" required>
+                    {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Created By</label>
+                <select name="created_by" id="edit_task_created_by" class="form-control" required>
+                    {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Stage</label>
+                <select name="stage" id="edit_task_stage" class="form-control" required>
+                    <option value="created">Created</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="review">Review</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Deadline</label>
+                <input type="datetime-local" name="deadline" id="edit_task_deadline" class="form-control">
+            </div>
+            <button type="submit" class="form-submit">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal-overlay" id="modal-edit-user">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modal-edit-user')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <h3 class="modal-title">Edit Employee</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="model_name" value="user">
+            <input type="hidden" name="id" id="edit_user_id">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" id="edit_user_username" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" id="edit_user_email" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>New Password (Leave blank to keep current)</label>
+                <input type="password" name="password" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <select name="role" id="edit_user_role" class="form-control" required>
+                    <option value="employee">Employee</option>
+                    <option value="department_manager">Department Manager</option>
+                    <option value="super_admin">Super Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Department</label>
+                <select name="department" id="edit_user_dept" class="form-control">
+                    <option value="">-- No Department --</option>
+                    {% for d in departments %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select name="is_active" id="edit_user_is_active" class="form-control">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+            <button type="submit" class="form-submit">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Customer Modal -->
+<div class="modal-overlay" id="modal-edit-customer">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeModal('modal-edit-customer')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <h3 class="modal-title">Edit Customer</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="model_name" value="customer">
+            <input type="hidden" name="id" id="edit_cus_id">
+            <div class="form-group">
+                <label>First Name</label>
+                <input type="text" name="first_name" id="edit_cus_fname" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" name="last_name" id="edit_cus_lname" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" name="phone_number" id="edit_cus_phone" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" id="edit_cus_email" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Passport Number</label>
+                <input type="text" name="passport_number" id="edit_cus_passp" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Address</label>
+                <textarea name="address" id="edit_cus_addr" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="description" id="edit_cus_desc" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status" id="edit_cus_status" class="form-control" required>
+                    <option value="new">New</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="contract_signed">Contract Signed</option>
+                    <option value="lost">Lost</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Owner (Created By)</label>
+                <select name="created_by" id="edit_cus_created_by" class="form-control" required>
+                    {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="form-submit">Save Changes</button>
+        </form>
+    </div>
+</div>
+<!-- Modal: View Customer Tasks -->
+<div class="modal-overlay" id="modal-customer-tasks">
+    <div class="modal-box" style="max-width: 600px;">
+        <button class="modal-close" onclick="closeModal('modal-customer-tasks')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <h3 class="modal-title">Tasks for: <span id="ct-customer-name" class="text-accent"></span></h3>
+        <div style="max-height: 400px; overflow-y: auto;">
+            <table id="ct-tasks-table">
+              <thead>
+                <tr><th>Task</th><th>Assigned to</th><th>Stage</th><th>Deadline</th></tr>
+              </thead>
+              <tbody id="ct-tasks-body">
+                <!-- این بخش توسط جاوا اسکریپت پر می‌شود -->
+              </tbody>
+            </table>
+            <div id="ct-no-tasks" style="display:none; text-align:center; padding: 30px 20px; color: var(--text-faint);">
+                No tasks found for this customer.
+            </div>
+        </div>
     </div>
 </div>
 
@@ -981,6 +1259,113 @@
   function closeModal(id) {
     document.getElementById(id).classList.remove('active');
   }
+
+  // Edit populators
+  function openEditDepartment(id, name, manager, parent) {
+      document.getElementById('edit_dept_id').value = id;
+      document.getElementById('edit_dept_name').value = name;
+      document.getElementById('edit_dept_manager').value = manager;
+      document.getElementById('edit_dept_parent').value = parent;
+      openModal('modal-edit-department');
+  }
+
+  function openEditTask(id, title, desc, customer, assignedTo, stage, deadline, createdBy) {
+      document.getElementById('edit_task_id').value = id;
+      document.getElementById('edit_task_title').value = title;
+      document.getElementById('edit_task_desc').value = desc;
+      document.getElementById('edit_task_customer').value = customer;
+      document.getElementById('edit_task_assigned').value = assignedTo;
+      document.getElementById('edit_task_stage').value = stage;
+      document.getElementById('edit_task_deadline').value = deadline;
+      document.getElementById('edit_task_created_by').value = createdBy;
+      openModal('modal-edit-task');
+  }
+
+  function openEditUser(id, username, email, role, dept, isActive) {
+      document.getElementById('edit_user_id').value = id;
+      document.getElementById('edit_user_username').value = username;
+      document.getElementById('edit_user_email').value = email;
+      document.getElementById('edit_user_role').value = role;
+      document.getElementById('edit_user_dept').value = dept;
+      document.getElementById('edit_user_is_active').value = isActive;
+      openModal('modal-edit-user');
+  }
+
+  function openEditCustomer(id, fname, lname, phone, email, passp, addr, desc, status, createdBy) {
+      document.getElementById('edit_cus_id').value = id;
+      document.getElementById('edit_cus_fname').value = fname;
+      document.getElementById('edit_cus_lname').value = lname;
+      document.getElementById('edit_cus_phone').value = phone;
+      document.getElementById('edit_cus_email').value = email;
+      document.getElementById('edit_cus_passp').value = passp;
+      document.getElementById('edit_cus_addr').value = addr;
+      document.getElementById('edit_cus_desc').value = desc;
+      document.getElementById('edit_cus_status').value = status;
+      document.getElementById('edit_cus_created_by').value = createdBy;
+      openModal('modal-edit-customer');
+  }
+  // دریافت تمام تسک‌ها از دیتابیس به صورت یک آرایه جاوا اسکریپت
+const allTasksData = [
+    {% for task in tasks %}
+    {
+        id: "{{ task.id }}",
+        title: "{{ task.title|escapejs }}",
+        customer_id: "{{ task.customer_id }}",
+        assigned_to: "{{ task.assigned_to.username|escapejs }}",
+        stage: "{{ task.stage|escapejs }}",
+        deadline: "{% if task.deadline %}{{ task.deadline|date:'M d' }}{% else %}—{% endif %}"
+    },
+    {% endfor %}
+];
+
+// تابع فیلتر و نمایش تسک‌های یک مشتری
+function openCustomerTasks(customerId, customerName) {
+    document.getElementById('ct-customer-name').innerText = customerName;
+    const tbody = document.getElementById('ct-tasks-body');
+    const noTasksDiv = document.getElementById('ct-no-tasks');
+    const table = document.getElementById('ct-tasks-table');
+
+    // پاک کردن دیتای قبلی
+    tbody.innerHTML = '';
+
+    // فیلتر کردن تسک‌هایی که آیدی مشتری آن‌ها با مشتری انتخاب شده برابر است
+    const customerTasks = allTasksData.filter(t => t.customer_id == customerId);
+
+    if (customerTasks.length === 0) {
+        table.style.display = 'none';
+        noTasksDiv.style.display = 'block';
+    } else {
+        table.style.display = 'table';
+        noTasksDiv.style.display = 'none';
+
+        customerTasks.forEach(t => {
+            // ساخت دیزاین وضعیت (Stage)
+            let stagePill = '';
+            if(t.stage === 'created') stagePill = `<span class="pill" style="background:var(--surface-hover);color:var(--text-faint);"><span class="dot" style="background:var(--text-faint)"></span>Created</span>`;
+            else if(t.stage === 'in_progress') stagePill = `<span class="pill pill-info"><span class="dot"></span>In progress</span>`;
+            else if(t.stage === 'review') stagePill = `<span class="pill pill-warning"><span class="dot"></span>Review</span>`;
+            else if(t.stage === 'completed') stagePill = `<span class="pill pill-teal"><span class="dot"></span>Completed</span>`;
+
+            const row = document.createElement('tr');
+            row.className = 'row-hover';
+            row.innerHTML = `
+                <td class="cell-name">${t.title}</td>
+                <td>
+                    <div class="mini-avatar" style="display:inline-flex; vertical-align:middle; margin-right:6px;">
+                        ${t.assigned_to.charAt(0).toUpperCase()}
+                    </div>
+                    ${t.assigned_to}
+                </td>
+                <td>${stagePill}</td>
+                <td class="mono text-faint">${t.deadline}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // باز کردن مُدال
+    openModal('modal-customer-tasks');
+}
 </script>
 
 </body>
