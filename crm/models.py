@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser  # اینپورت درست برای توسعه کاربر پیش‌فرض
 from django.conf import settings  # برای ارجاع استاندارد به مدل کاربر در بقیه مدل‌ها
@@ -107,20 +108,40 @@ class Customer(models.Model):
         (STATUS_LOST, 'Lost'),
     ]
 
-    name = models.CharField(max_length=100)
-    contact_info = models.TextField()
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default=STATUS_NEW)
+    # کد یکتای سیستم
+    unique_code = models.CharField(max_length=20, unique=True, editable=False)
+
+    # فیلدهای الزامی
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=20)
+
+    # فیلدهای اختیاری
+    email = models.EmailField(blank=True, null=True)
+    passport_number = models.CharField(max_length=50, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
 
+    # اطلاعات ثبت
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_customers')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default=STATUS_NEW)
+
     class Meta:
-        ordering = ['-id']
+        ordering = ['-created_at']
         indexes = [
             models.Index(fields=['status']),
         ]
 
+    def save(self, *args, **kwargs):
+        # تولید کد یکتا در صورت عدم وجود (فقط در زمان ایجاد اولیه)
+        if not self.unique_code:
+            self.unique_code = f"CUS-{uuid.uuid4().hex[:8].upper()}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return self.name
+        return f"{self.first_name} {self.last_name} ({self.unique_code})"
 
 
 class Task(models.Model):
@@ -138,6 +159,10 @@ class Task(models.Model):
 
     title = models.CharField(max_length=200)
     description = models.TextField()
+
+    # ارتباط اجباری با مشتری (بدون blank و null)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='tasks')
+
     assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='assigned_tasks')
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_tasks', on_delete=models.CASCADE)
     stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default=STAGE_CREATED)
@@ -151,23 +176,20 @@ class Task(models.Model):
 
     def clean(self):
         super().clean()
-        # کارمند اختصاص‌یافته باید عضو همون دپارتمانی باشه که ایجادکننده (منیجر) بهش تعلق داره
-        # (در صورتی که هر دو department مشخص داشته باشن)
         if (
-            self.assigned_to_id
-            and self.created_by_id
-            and self.created_by.department_id
-            and self.assigned_to.department_id
-            and self.created_by.department_id != self.assigned_to.department_id
-            and self.created_by.role != User.ROLE_SUPER_ADMIN
+                self.assigned_to_id
+                and self.created_by_id
+                and self.created_by.department_id
+                and self.assigned_to.department_id
+                and self.created_by.department_id != self.assigned_to.department_id
+                and self.created_by.role != 'super_admin'  # ارجاع مستقیم به رشته برای جلوگیری از خطای ایمپورت
         ):
             raise ValidationError({
                 'assigned_to': 'تسک فقط می‌تواند به کارمندِ همان دپارتمان اختصاص داده شود.'
             })
 
     def __str__(self):
-        return self.title
-
+        return f"{self.title} - {self.customer.first_name}"
 
 class ActivityLog(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
