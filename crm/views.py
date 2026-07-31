@@ -104,7 +104,8 @@ def super_admin_dashboard(request):
                     last_name=request.POST.get('last_name'),
                     phone_number=request.POST.get('phone_number'),
                     email=request.POST.get('email') or None,
-                    passport_number=request.POST.get('passport_number') or None,
+                    passport_number=request.POST.get(
+                        'passport_number') or None,
                     address=request.POST.get('address') or None,
                     description=request.POST.get('description') or None,
                     created_by=request.user,
@@ -138,7 +139,8 @@ def super_admin_dashboard(request):
                 Task.objects.create(
                     title=request.POST.get('title'),
                     description=request.POST.get('description'),
-                    customer_id=request.POST.get('customer'),  # فیلد اجباری جدید
+                    customer_id=request.POST.get(
+                        'customer'),  # فیلد اجباری جدید
                     assigned_to_id=request.POST.get('assigned_to'),
                     created_by=request.user,
                     stage=request.POST.get('stage'),
@@ -151,7 +153,8 @@ def super_admin_dashboard(request):
                 t = get_object_or_404(Task, pk=request.POST.get('id'))
                 t.title = request.POST.get('title')
                 t.description = request.POST.get('description')
-                t.customer_id = request.POST.get('customer')  # امکان تغییر مشتری متصل به تسک
+                # امکان تغییر مشتری متصل به تسک
+                t.customer_id = request.POST.get('customer')
                 t.assigned_to_id = request.POST.get('assigned_to')
                 t.stage = request.POST.get('stage')
                 t.deadline = request.POST.get('deadline') or None
@@ -198,12 +201,14 @@ def manager_dashboard(request):
         if model_name == 'task':
             if action == 'add':
                 assigned_user_id = request.POST.get('assigned_to')
-                assigned_user = get_object_or_404(dept_users, id=assigned_user_id)
+                assigned_user = get_object_or_404(
+                    dept_users, id=assigned_user_id)
 
                 Task.objects.create(
                     title=request.POST.get('title'),
                     description=request.POST.get('description'),
-                    customer_id=request.POST.get('customer'),  # اتصال اجباری به مشتری
+                    customer_id=request.POST.get(
+                        'customer'),  # اتصال اجباری به مشتری
                     assigned_to=assigned_user,
                     created_by=request.user,
                     stage=request.POST.get('stage', 'created'),
@@ -214,7 +219,8 @@ def manager_dashboard(request):
             elif action == 'edit_stage':
                 task_id = request.POST.get('id')
                 new_stage = request.POST.get('stage')
-                task = get_object_or_404(Task, pk=task_id, assigned_to__in=dept_users)
+                task = get_object_or_404(
+                    Task, pk=task_id, assigned_to__in=dept_users)
                 task.stage = new_stage
                 task.save()
                 messages.success(request, 'وضعیت تسک به‌روزرسانی شد.')
@@ -227,7 +233,8 @@ def manager_dashboard(request):
                     last_name=request.POST.get('last_name'),
                     phone_number=request.POST.get('phone_number'),
                     email=request.POST.get('email') or None,
-                    passport_number=request.POST.get('passport_number') or None,
+                    passport_number=request.POST.get(
+                        'passport_number') or None,
                     address=request.POST.get('address') or None,
                     description=request.POST.get('description') or None,
                     created_by=request.user,
@@ -247,7 +254,8 @@ def manager_dashboard(request):
                 c.description = request.POST.get('description') or None
                 c.status = request.POST.get('status')
                 c.save()
-                messages.success(request, 'مشخصات و وضعیت مشتری به‌روزرسانی شد.')
+                messages.success(
+                    request, 'مشخصات و وضعیت مشتری به‌روزرسانی شد.')
 
         return redirect('manager_dashboard')
 
@@ -257,7 +265,8 @@ def manager_dashboard(request):
         '-created_at')
     dept_tasks = Task.objects.filter(assigned_to__in=dept_users).select_related('customer', 'assigned_to',
                                                                                 'created_by').order_by('-id')
-    my_notifications = Notification.objects.filter(recipient=request.user).select_related('sender', 'related_task')
+    my_notifications = Notification.objects.filter(
+        recipient=request.user).select_related('sender', 'related_task')
 
     context = {
         'department': my_department,
@@ -284,7 +293,8 @@ def employee_dashboard(request):
             if action == 'edit_stage':
                 task_id = request.POST.get('id')
                 new_stage = request.POST.get('stage')
-                task = get_object_or_404(Task, pk=task_id, assigned_to=request.user)
+                task = get_object_or_404(
+                    Task, pk=task_id, assigned_to=request.user)
                 task.stage = new_stage
                 task.save()
                 messages.success(request, 'مرحله تسک با موفقیت تغییر کرد.')
@@ -297,7 +307,8 @@ def employee_dashboard(request):
                     last_name=request.POST.get('last_name'),
                     phone_number=request.POST.get('phone_number'),
                     email=request.POST.get('email') or None,
-                    passport_number=request.POST.get('passport_number') or None,
+                    passport_number=request.POST.get(
+                        'passport_number') or None,
                     address=request.POST.get('address') or None,
                     description=request.POST.get('description') or None,
                     created_by=request.user,
@@ -317,7 +328,8 @@ def employee_dashboard(request):
                 c.description = request.POST.get('description') or None
                 c.status = request.POST.get('status')
                 c.save()
-                messages.success(request, 'اطلاعات و وضعیت مشتری با موفقیت ویرایش شد.')
+                messages.success(
+                    request, 'اطلاعات و وضعیت مشتری با موفقیت ویرایش شد.')
 
         return redirect('employee_dashboard')
 
@@ -325,8 +337,10 @@ def employee_dashboard(request):
     all_customers = Customer.objects.select_related('created_by').prefetch_related('tasks__assigned_to',
                                                                                    'tasks__created_by').order_by(
         '-created_at')
-    my_tasks = Task.objects.filter(assigned_to=request.user).select_related('customer', 'created_by').order_by('-id')
-    my_notifications = Notification.objects.filter(recipient=request.user).select_related('sender', 'related_task')
+    my_tasks = Task.objects.filter(assigned_to=request.user).select_related(
+        'customer', 'created_by').order_by('-id')
+    my_notifications = Notification.objects.filter(
+        recipient=request.user).select_related('sender', 'related_task')
 
     context = {
         'tasks': my_tasks,
