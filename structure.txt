@@ -1,0 +1,25 @@
+.
+├── crm
+│   ├── __init__.py
+│   ├── __pycache__
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations
+│   ├── models.py
+│   ├── static
+│   ├── templates
+│   ├── tests.py
+│   ├── urls.py
+│   └── views.py
+├── djangoprojectcrm
+│   ├── __init__.py
+│   ├── __pycache__
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── manage.py
+├── requirments.txt
+└── structure.txt
+
+8 directories, 15 files
