@@ -1,4 +1,5 @@
 .
+├── Dockerfile
 ├── crm
 │   ├── __init__.py
 │   ├── __pycache__
@@ -18,8 +19,9 @@
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
+├── docker-compose.yml
 ├── manage.py
 ├── requirments.txt
 └── structure.txt
 
-8 directories, 15 files
+8 directories, 17 files
